@@ -1,122 +1,101 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect, useCallback } from 'react';
+import Header from './components/Header.jsx';
+import HangmanDrawing from './components/HangmanDrawing.jsx';
+import LivesCounter from './components/LivesCounter.jsx';
+import WordDisplay from './components/WordDisplay.jsx';
+import Keyboard from './components/Keyboard.jsx';
+import GuessedLetters from './components/GuessedLetters.jsx';
+import NewGameButton from './components/NewGameButton.jsx';
+import ResultModal from './components/ResultModal.jsx';
+import { getRandomWord } from './data/words.js';
+import { MAX_WRONG_GUESSES } from './components/HangmanDrawing.jsx';
 
+// App is the single source of truth: it owns all game state and passes
+// data down to child components through props. Children report user
+// actions back up through callback props (onGuess, onNewGame, ...).
 function App() {
-  const [count, setCount] = useState(0)
+  const [entry, setEntry] = useState(getRandomWord);
+  const [guessedLetters, setGuessedLetters] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+
+  const word = entry.word;
+
+  // Derived values: computed from state on every render, never stored.
+  const wrongLetters = guessedLetters.filter((l) => !word.includes(l));
+  const correctLetters = guessedLetters.filter((l) => word.includes(l));
+  const isLoser = wrongLetters.length >= MAX_WRONG_GUESSES;
+  const isWinner = word.split('').every((l) => guessedLetters.includes(l));
+  const isGameOver = isWinner || isLoser;
+
+  const handleGuess = useCallback(
+    (letter) => {
+      if (isGameOver || guessedLetters.includes(letter)) return;
+      setGuessedLetters((prev) => [...prev, letter]);
+    },
+    [isGameOver, guessedLetters]
+  );
+
+  const handleNewGame = () => {
+    setEntry(getRandomWord());
+    setGuessedLetters([]);
+    setShowModal(false);
+  };
+
+  // Open the pop-up when the game ends.
+  useEffect(() => {
+    if (isGameOver) setShowModal(true);
+  }, [isGameOver]);
+
+  // Allow guessing with the physical keyboard too.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const key = e.key.toUpperCase();
+      if (/^[A-Z]$/.test(key)) handleGuess(key);
+      if (e.key === 'Enter' && isGameOver) handleNewGame();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleGuess, isGameOver]);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+    <div className="app">
+      <Header />
+
+      <main className="game">
+        <section className="game__left">
+          <HangmanDrawing wrongGuesses={wrongLetters.length} />
+          <LivesCounter
+            livesLeft={MAX_WRONG_GUESSES - wrongLetters.length}
+            maxLives={MAX_WRONG_GUESSES}
+          />
+        </section>
+
+        <section className="game__right">
+          <p className="hint">
+            <strong>Hint:</strong> {entry.hint}
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+          <WordDisplay word={word} guessedLetters={guessedLetters} reveal={isLoser} />
+          <GuessedLetters correctLetters={correctLetters} wrongLetters={wrongLetters} />
+          <Keyboard
+            correctLetters={correctLetters}
+            wrongLetters={wrongLetters}
+            disabled={isGameOver}
+            onGuess={handleGuess}
+          />
+          <NewGameButton onNewGame={handleNewGame} />
+        </section>
+      </main>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {showModal && (
+        <ResultModal
+          isWinner={isWinner}
+          word={word}
+          onNewGame={handleNewGame}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;

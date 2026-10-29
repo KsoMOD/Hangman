@@ -1,0 +1,7 @@
+services:
+  hangman:
+    build: .
+    container_name: hangman
+    ports:
+      - "8080:80"
+    restart: unless-stopped
