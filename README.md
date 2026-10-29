@@ -45,7 +45,7 @@ The player guesses a hidden word one letter at a time. Every wrong guess adds a 
 Requirements: [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose).
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/KsoMOD/Hangman.git
 cd hangman
 docker compose up --build
 ```
@@ -146,7 +146,7 @@ All code was reviewed, run and tested by the author, who is responsible for the 
 
 ## Authors and Acknowledgment
 
-- **Jordan** – developer
+- **Jordan Hemmings** – developer
 - Hangman artwork provided with the course assignment.
 - Built with [Vite](https://vite.dev/guide/) and [React](https://react.dev/).
 
